@@ -1,0 +1,359 @@
+"""
+EJEMPLO: Cómo escribir nuevas pruebas unitarias
+
+Este archivo es un ejemplo/plantilla para crear nuevas pruebas.
+NO se ejecutará automáticamente (extensión .example)
+
+Para usar este ejemplo:
+1. Copia este archivo y renómbralo a test_mi_modulo.py
+2. Reemplaza MiClase con tu clase real
+3. Adapta las pruebas a tu funcionalidad
+4. Ejecuta: pytest tests/test_mi_modulo.py
+"""
+
+import pytest
+from unittest.mock import Mock, patch, MagicMock
+from datetime import datetime
+
+# Importa tu módulo aquí
+# from src.mi_modulo import MiClase
+
+
+class TestMiClase:
+    """
+    Clase de pruebas para MiClase
+    
+    Convenciones:
+    - Una clase de prueba por cada clase a probar
+    - Nombre: Test + NombreClase
+    - Métodos empiezan con test_
+    """
+    
+    # ========================================
+    # EJEMPLO 1: Prueba básica sin mocks
+    # ========================================
+    
+    def test_metodo_simple(self):
+        """Verifica el comportamiento básico de un método simple"""
+        # Arrange (Preparar)
+        # Configura los datos y objetos necesarios
+        valor_entrada = 10
+        valor_esperado = 20
+        
+        # Act (Actuar)
+        # Ejecuta el método que quieres probar
+        # resultado = MiClase().mi_metodo(valor_entrada)
+        resultado = valor_entrada * 2  # Ejemplo
+        
+        # Assert (Afirmar)
+        # Verifica que el resultado sea el esperado
+        assert resultado == valor_esperado
+        assert isinstance(resultado, int)
+    
+    # ========================================
+    # EJEMPLO 2: Prueba con fixture
+    # ========================================
+    
+    def test_con_fixture(self, sample_audio_model):
+        """Verifica usando un fixture predefinido"""
+        # Los fixtures se definen en conftest.py
+        # Se pasan como parámetros al método
+        
+        # Arrange
+        audio = sample_audio_model
+        
+        # Act
+        # resultado = MiClase().procesar_audio(audio)
+        
+        # Assert
+        assert audio.id_conversation == "test-conv-123"
+        assert audio.status == "PENDING"
+    
+    # ========================================
+    # EJEMPLO 3: Prueba con mock simple
+    # ========================================
+    
+    def test_con_mock_simple(self):
+        """Verifica usando un mock simple"""
+        # Arrange
+        mock_objeto = Mock()
+        mock_objeto.metodo.return_value = "valor_mockeado"
+        
+        # Act
+        resultado = mock_objeto.metodo()
+        
+        # Assert
+        assert resultado == "valor_mockeado"
+        mock_objeto.metodo.assert_called_once()
+    
+    # ========================================
+    # EJEMPLO 4: Prueba con patch
+    # ========================================
+    
+    @patch('src.repository.audio_repository.Session')
+    @patch('src.repository.audio_repository.engine')
+    def test_con_patch(self, mock_engine, mock_session_class):
+        """Verifica usando patch para reemplazar dependencias"""
+        # Arrange
+        mock_session = MagicMock()
+        mock_session_class.return_value.__enter__.return_value = mock_session
+        
+        # Configurar el comportamiento del mock
+        mock_session.query.return_value.filter.return_value.first.return_value = None
+        
+        # Act
+        # resultado = MiClase().consultar_bd()
+        
+        # Assert
+        # assert resultado is None
+        # mock_session.query.assert_called_once()
+    
+    # ========================================
+    # EJEMPLO 5: Prueba de excepción
+    # ========================================
+    
+    def test_lanza_excepcion(self):
+        """Verifica que se lance una excepción cuando debería"""
+        # Arrange
+        valor_invalido = None
+        
+        # Act & Assert
+        with pytest.raises(ValueError) as exc_info:
+            if valor_invalido is None:
+                raise ValueError("El valor no puede ser None")
+        
+        # Verificar el mensaje de la excepción
+        assert "no puede ser None" in str(exc_info.value)
+    
+    # ========================================
+    # EJEMPLO 6: Prueba de manejo de excepciones
+    # ========================================
+    
+    @patch('src.repository.audio_repository.Session')
+    def test_manejo_excepcion(self, mock_session_class):
+        """Verifica que se manejen correctamente las excepciones"""
+        # Arrange
+        mock_session = MagicMock()
+        mock_session_class.return_value.__enter__.return_value = mock_session
+        
+        # Configurar el mock para lanzar excepción
+        mock_session.commit.side_effect = Exception("Error de BD")
+        
+        # Act & Assert
+        # La función debe capturar la excepción y retornar False o None
+        # resultado = MiClase().guardar_dato()
+        # assert resultado is False
+    
+    # ========================================
+    # EJEMPLO 7: Prueba con múltiples asserts
+    # ========================================
+    
+    def test_multiples_verificaciones(self, sample_job_model):
+        """Verifica múltiples aspectos de un resultado"""
+        # Arrange
+        job = sample_job_model
+        
+        # Act
+        # resultado = MiClase().procesar_job(job)
+        
+        # Assert - Verificar múltiples cosas
+        assert job.id == 1
+        assert job.status == "PROCESSING"
+        assert isinstance(job.creation_date, datetime)
+        # assert resultado['success'] is True
+        # assert resultado['message'] == "Procesado correctamente"
+        # assert len(resultado['items']) > 0
+    
+    # ========================================
+    # EJEMPLO 8: Prueba parametrizada
+    # ========================================
+    
+    @pytest.mark.parametrize("entrada,esperado", [
+        (0, 0),
+        (1, 2),
+        (5, 10),
+        (10, 20),
+        (-5, -10),
+    ])
+    def test_parametrizado(self, entrada, esperado):
+        """Verifica múltiples casos con diferentes valores"""
+        # Act
+        resultado = entrada * 2
+        
+        # Assert
+        assert resultado == esperado
+    
+    # ========================================
+    # EJEMPLO 9: Prueba con setup/teardown
+    # ========================================
+    
+    def setup_method(self):
+        """Se ejecuta ANTES de cada prueba"""
+        self.valor_compartido = "inicializado"
+        # Útil para configurar estado común
+    
+    def teardown_method(self):
+        """Se ejecuta DESPUÉS de cada prueba"""
+        # Útil para limpiar recursos
+        pass
+    
+    def test_usa_setup(self):
+        """Verifica usando el valor del setup"""
+        assert self.valor_compartido == "inicializado"
+    
+    # ========================================
+    # EJEMPLO 10: Prueba con mock de API externa
+    # ========================================
+    
+    @patch('src.integrations.genesys_integration.genesys_sdk')
+    def test_llamada_api_externa(self, mock_genesys_sdk):
+        """Verifica interacción con API externa"""
+        # Arrange
+        mock_api_client = Mock()
+        mock_genesys_sdk.ApiClient.return_value = mock_api_client
+        
+        # Configurar respuesta esperada
+        mock_api_client.get_client_credentials_token.return_value = "token_123"
+        
+        # Act
+        # MiClase().autenticar()
+        
+        # Assert
+        # mock_api_client.get_client_credentials_token.assert_called_once()
+    
+    # ========================================
+    # EJEMPLO 11: Prueba de integración entre componentes
+    # ========================================
+    
+    @patch('src.repository.audio_repository.AudioRepository')
+    @patch('src.repository.job_repository.JobRepository')
+    def test_integracion_componentes(self, mock_job_repo, mock_audio_repo):
+        """Verifica que múltiples componentes trabajen juntos"""
+        # Arrange
+        mock_job_instance = Mock()
+        mock_job_repo.return_value = mock_job_instance
+        
+        mock_audio_instance = Mock()
+        mock_audio_repo.return_value = mock_audio_instance
+        
+        # Configurar comportamiento
+        mock_job_instance.insert.return_value = Mock(id=1)
+        mock_audio_instance.insert.return_value = Mock(id=1)
+        
+        # Act
+        # MiClase().proceso_completo()
+        
+        # Assert
+        # Verificar que se llamaron ambos repositorios
+        # mock_job_instance.insert.assert_called_once()
+        # mock_audio_instance.insert.assert_called_once()
+
+
+# ========================================
+# EJEMPLO 12: Fixtures personalizados
+# ========================================
+
+@pytest.fixture
+def mi_fixture_personalizado():
+    """Fixture personalizado para estas pruebas"""
+    # Setup
+    datos = {
+        'nombre': 'Test',
+        'valor': 123,
+        'activo': True
+    }
+    
+    yield datos  # Retorna los datos a la prueba
+    
+    # Teardown (opcional)
+    # Código de limpieza aquí
+
+
+class TestConFixturePersonalizado:
+    """Ejemplo usando fixture personalizado"""
+    
+    def test_usa_fixture_personalizado(self, mi_fixture_personalizado):
+        """Verifica usando el fixture personalizado"""
+        assert mi_fixture_personalizado['nombre'] == 'Test'
+        assert mi_fixture_personalizado['valor'] == 123
+
+
+# ========================================
+# TIPS Y MEJORES PRÁCTICAS
+# ========================================
+
+"""
+✅ HACER:
+
+1. Nombres descriptivos
+   - test_get_audio_returns_none_when_not_found()
+   - test_insert_audio_raises_exception_on_db_error()
+
+2. Un concepto por prueba
+   - Cada test debe verificar UNA cosa específica
+
+3. Usar Arrange-Act-Assert
+   - Siempre seguir este patrón
+
+4. Mockear dependencias externas
+   - Base de datos
+   - APIs
+   - Sistema de archivos
+
+5. Probar casos edge
+   - Valores None
+   - Listas vacías
+   - Strings vacíos
+   - Valores negativos
+
+6. Documentar con docstrings
+   - Explicar QUÉ se está probando
+
+❌ NO HACER:
+
+1. Pruebas que dependen de otras pruebas
+   - Cada prueba debe ser independiente
+
+2. Pruebas que dependen del orden
+   - Las pruebas pueden ejecutarse en cualquier orden
+
+3. Usar datos reales de producción
+   - Siempre usar datos de prueba
+
+4. Pruebas muy largas
+   - Si es muy larga, dividir en varias pruebas
+
+5. Ignorar casos de error
+   - Probar tanto éxito como fallo
+
+6. Hardcodear valores sin explicación
+   - Usar constantes con nombres descriptivos
+"""
+
+# ========================================
+# COMANDOS ÚTILES
+# ========================================
+
+"""
+# Ejecutar este archivo
+pytest tests/test_mi_modulo.py
+
+# Ejecutar con verbose
+pytest tests/test_mi_modulo.py -v
+
+# Ejecutar una prueba específica
+pytest tests/test_mi_modulo.py::TestMiClase::test_metodo_simple
+
+# Ver prints
+pytest tests/test_mi_modulo.py -s
+
+# Ver cobertura
+pytest --cov=src.mi_modulo tests/test_mi_modulo.py
+
+# Detener en primera falla
+pytest tests/test_mi_modulo.py -x
+
+# Modo debug
+pytest tests/test_mi_modulo.py -vv --tb=long
+"""
+
