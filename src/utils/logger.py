@@ -20,5 +20,5 @@ logging.Formatter.converter = lambda *args: datetime.now(tz=timezone('America/Li
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
-logger.setLevel(LOG_LEVEL)
+logger.setLevel(LOG_LEVEL.upper())
 logger.addHandler(handler)
