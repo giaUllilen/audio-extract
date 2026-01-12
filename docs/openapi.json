@@ -1,0 +1,948 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Audio Extract Service API",
+    "description": "Servicio de extracción de audios de Genesys para Interseguro SAC. Esta API representa las operaciones del servicio batch de extracción y procesamiento de audios.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Gianella",
+      "email": "soporte@interseguro.pe"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.interseguro.pe/audio-extract/v1",
+      "description": "Servidor de producción"
+    },
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Servidor de desarrollo local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Jobs",
+      "description": "Operaciones relacionadas con trabajos de extracción"
+    },
+    {
+      "name": "Audios",
+      "description": "Operaciones relacionadas con audios extraídos"
+    },
+    {
+      "name": "Batches",
+      "description": "Operaciones relacionadas con lotes de procesamiento"
+    },
+    {
+      "name": "Extraction",
+      "description": "Operaciones de extracción y procesamiento"
+    }
+  ],
+  "paths": {
+    "/extract/execute": {
+      "post": {
+        "tags": ["Extraction"],
+        "summary": "Ejecutar extracción de audios",
+        "description": "Inicia el proceso de extracción de audios de Genesys para el día anterior. Si el día anterior es domingo, procesa el sábado.",
+        "operationId": "executeExtraction",
+        "responses": {
+          "200": {
+            "description": "Extracción ejecutada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Extracción iniciada exitosamente"
+                    },
+                    "job_id": {
+                      "type": "integer",
+                      "example": 123
+                    },
+                    "conversations_found": {
+                      "type": "integer",
+                      "example": 45
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/extract/date-range": {
+      "post": {
+        "tags": ["Extraction"],
+        "summary": "Extraer audios por rango de fechas",
+        "description": "Obtiene los IDs de audios de conversaciones de Genesys para un rango de fechas específico",
+        "operationId": "extractByDateRange",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["start_date", "end_date"],
+                "properties": {
+                  "start_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-11T00:00:00",
+                    "description": "Fecha de inicio del rango"
+                  },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-01-11T23:59:59",
+                    "description": "Fecha de fin del rango"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Audios extraídos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conversations": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Audio"
+                      }
+                    },
+                    "job": {
+                      "$ref": "#/components/schemas/Job"
+                    },
+                    "total": {
+                      "type": "integer",
+                      "example": 45
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Listar todos los trabajos",
+        "description": "Obtiene la lista de todos los trabajos de extracción",
+        "operationId": "listJobs",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtrar por estado del trabajo",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PROCESSING", "SUCCESS", "ERROR"]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de trabajos obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Job"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "page_size": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Obtener detalles de un trabajo",
+        "description": "Obtiene los detalles de un trabajo específico por su ID",
+        "operationId": "getJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "description": "ID del trabajo",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del trabajo obtenidos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trabajo no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Jobs"],
+        "summary": "Actualizar estado del trabajo",
+        "description": "Actualiza el estado de un trabajo específico",
+        "operationId": "updateJobStatus",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "description": "ID del trabajo",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["PROCESSING", "SUCCESS", "ERROR"],
+                    "example": "SUCCESS"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del trabajo actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trabajo no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audios": {
+      "get": {
+        "tags": ["Audios"],
+        "summary": "Listar todos los audios",
+        "description": "Obtiene la lista de todos los audios extraídos",
+        "operationId": "listAudios",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtrar por estado del audio",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING", "PROCESSING", "COMPLETED", "ERROR"]
+            }
+          },
+          {
+            "name": "batch_id",
+            "in": "query",
+            "description": "Filtrar por ID de lote",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "call_date_from",
+            "in": "query",
+            "description": "Filtrar desde fecha de llamada",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "call_date_to",
+            "in": "query",
+            "description": "Filtrar hasta fecha de llamada",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de audios obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "audios": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Audio"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "page_size": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audios/{audio_id}": {
+      "get": {
+        "tags": ["Audios"],
+        "summary": "Obtener detalles de un audio",
+        "description": "Obtiene los detalles de un audio específico por su ID",
+        "operationId": "getAudio",
+        "parameters": [
+          {
+            "name": "audio_id",
+            "in": "path",
+            "description": "ID del audio",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del audio obtenidos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Audio"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Audio no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audios/conversation/{conversation_id}": {
+      "get": {
+        "tags": ["Audios"],
+        "summary": "Obtener audio por ID de conversación",
+        "description": "Obtiene el audio asociado a un ID de conversación de Genesys",
+        "operationId": "getAudioByConversationId",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "description": "ID de conversación de Genesys",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audio encontrado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Audio"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Audio no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batches": {
+      "get": {
+        "tags": ["Batches"],
+        "summary": "Listar todos los lotes",
+        "description": "Obtiene la lista de todos los lotes de procesamiento",
+        "operationId": "listBatches",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtrar por estado del lote",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING", "PROCESSING", "COMPLETED", "ERROR"]
+            }
+          },
+          {
+            "name": "job_id",
+            "in": "query",
+            "description": "Filtrar por ID de trabajo",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de lotes obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "batches": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Batch"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "page_size": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batches/{batch_id}": {
+      "get": {
+        "tags": ["Batches"],
+        "summary": "Obtener detalles de un lote",
+        "description": "Obtiene los detalles de un lote específico por su ID",
+        "operationId": "getBatch",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "ID del lote",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del lote obtenidos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Batch"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batches/{batch_id}/audios": {
+      "get": {
+        "tags": ["Batches"],
+        "summary": "Obtener audios de un lote",
+        "description": "Obtiene todos los audios asociados a un lote específico",
+        "operationId": "getBatchAudios",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "ID del lote",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audios del lote obtenidos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "audios": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Audio"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Job": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID único del trabajo",
+            "example": 123
+          },
+          "creation_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de creación del trabajo",
+            "example": "2026-01-12T10:30:00"
+          },
+          "notify_id": {
+            "type": "string",
+            "description": "ID de notificación asociado",
+            "example": "notify-abc-123"
+          },
+          "output_attachment": {
+            "type": "string",
+            "description": "Ruta del archivo adjunto de salida",
+            "example": "/output/audios-2026-01-11.zip"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PROCESSING", "SUCCESS", "ERROR"],
+            "description": "Estado del trabajo",
+            "example": "SUCCESS"
+          }
+        },
+        "required": ["id", "creation_date", "notify_id", "output_attachment", "status"]
+      },
+      "Audio": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID único del audio",
+            "example": 456
+          },
+          "id_conversation": {
+            "type": "string",
+            "description": "ID de conversación de Genesys",
+            "example": "conv-abc-123-xyz"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "PROCESSING", "COMPLETED", "ERROR"],
+            "description": "Estado del audio",
+            "example": "COMPLETED"
+          },
+          "creation_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de creación del registro",
+            "example": "2026-01-12T10:30:00"
+          },
+          "call_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de la llamada",
+            "example": "2026-01-11T14:25:30"
+          },
+          "call_duration": {
+            "type": "integer",
+            "description": "Duración de la llamada en milisegundos",
+            "example": 125000
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Razón detallada de la llamada",
+            "example": "Cliente solicita información sobre póliza de seguro"
+          },
+          "reason_short": {
+            "type": "string",
+            "nullable": true,
+            "description": "Razón resumida de la llamada",
+            "example": "Consulta póliza"
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true,
+            "description": "Resumen de la conversación",
+            "example": "Cliente consultó sobre renovación de póliza. Se le proporcionó información detallada."
+          },
+          "initial_feeling": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sentimiento inicial del cliente",
+            "example": "neutral"
+          },
+          "final_feeling": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sentimiento final del cliente",
+            "example": "satisfecho"
+          },
+          "product_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tipo de producto relacionado",
+            "example": "Seguro de vida"
+          },
+          "category_typification": {
+            "type": "string",
+            "nullable": true,
+            "description": "Categoría de tipificación",
+            "example": "Consulta"
+          },
+          "typification": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tipificación específica",
+            "example": "Información de póliza"
+          },
+          "typification_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Razón de la tipificación",
+            "example": "Cliente requiere información detallada"
+          },
+          "batch_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "ID del lote al que pertenece",
+            "example": 789
+          }
+        },
+        "required": ["id", "id_conversation", "status", "creation_date", "call_date", "call_duration"]
+      },
+      "Batch": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID único del lote",
+            "example": 789
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de inicio del procesamiento",
+            "example": "2026-01-12T10:00:00"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fecha de fin del procesamiento",
+            "example": "2026-01-12T10:45:30"
+          },
+          "process_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fecha de procesamiento",
+            "example": "2026-01-12T10:30:00"
+          },
+          "audios_count": {
+            "type": "integer",
+            "description": "Cantidad de audios en el lote",
+            "example": 50
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "PROCESSING", "COMPLETED", "ERROR"],
+            "description": "Estado del lote",
+            "example": "COMPLETED"
+          },
+          "error_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Mensaje de error si aplica",
+            "example": null
+          },
+          "genesys_batch_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID del lote en Genesys",
+            "example": "genesys-batch-xyz-789"
+          },
+          "gemini_batch_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID del lote en Gemini",
+            "example": "gemini-batch-abc-456"
+          },
+          "gemini_category_batch_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID del lote de categorización en Gemini",
+            "example": "gemini-cat-batch-def-123"
+          },
+          "gemini_typification_batch_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID del lote de tipificación en Gemini",
+            "example": "gemini-typ-batch-ghi-789"
+          },
+          "job_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "ID del trabajo asociado",
+            "example": 123
+          }
+        },
+        "required": ["id", "start_date", "audios_count", "status"]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Código de error",
+            "example": "NOT_FOUND"
+          },
+          "message": {
+            "type": "string",
+            "description": "Descripción del error",
+            "example": "El recurso solicitado no fue encontrado"
+          },
+          "details": {
+            "type": "object",
+            "nullable": true,
+            "description": "Detalles adicionales del error"
+          }
+        },
+        "required": ["error", "message"]
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Autenticación mediante token JWT"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Autenticación mediante API Key"
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ]
+}
+
