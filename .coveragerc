@@ -1,0 +1,43 @@
+# Configuración de Coverage.py
+
+[run]
+source = src
+omit = 
+    */tests/*
+    */venv/*
+    */__pycache__/*
+    */site-packages/*
+    src/main.py
+
+[report]
+# Líneas que se excluirán del reporte de cobertura
+exclude_lines =
+    # Excluir bloques pragma
+    pragma: no cover
+    
+    # Excluir métodos abstractos
+    @abstractmethod
+    @abc.abstractmethod
+    
+    # Excluir bloques if TYPE_CHECKING
+    if TYPE_CHECKING:
+    
+    # Excluir excepciones que nunca se ejecutarán
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Excluir el bloque main
+    if __name__ == .__main__.:
+    
+    # Excluir métodos __repr__ y __str__
+    def __repr__
+    def __str__
+
+precision = 2
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov
+title = Audio Extract - Reporte de Cobertura
+

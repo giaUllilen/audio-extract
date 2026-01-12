@@ -1,0 +1,29 @@
+# Archivos de caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Archivos de pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Reportes de cobertura
+coverage.xml
+*.cover
+.coverage.*
+

@@ -1,0 +1,32 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Esta es una aplicación que se ejecuta de manera periódica, para acceder a la base de datos uso SQL Alchemy, la estructura del proyecto es la siguiente:
+audio-extract/                       # Directorio raíz del proyecto de extracción de audio
+├── src/                            # Código fuente principal del proyecto
+│   ├── service/                    # Servicios de negocio de la aplicación
+│   │   ├── audio_extract.py        # Implementación principal del servicio de extracción de audio
+│   ├── utils/                      # Utilidades y herramientas comunes
+│   │   ├── environment.py          # Configuración de entorno
+│   │   ├── logger.py               # Sistema de registro de eventos
+│   │   ├── threads.py              # Utilidades para manejo de hilos
+│   │   ├── config_app.py           # Configuración de la aplicación
+│   │   ├── database.py             # Configuración de conexión a base de datos
+│   │   ├── database_executes.py    # Ejecuciones SQL y operaciones de base de datos
+│   ├── repository/                 # Capa de acceso a datos
+│   │   ├── models/                 # Definiciones de modelos de datos
+│   │   │   ├── job_model.py        # Modelo para trabajos/tareas
+│   │   │   ├── audio_model.py      # Modelo para información de audio
+│   │   │   ├── batch_model.py      # Modelo para procesamiento por lotes
+│   │   ├── job_repository.py       # Repositorio para operaciones con trabajos
+│   │   ├── audio_repository.py     # Repositorio para operaciones con audio
+│   │   ├── batch_repository.py     # Repositorio para operaciones con lotes
+│   ├── integrations/               # Integraciones con servicios externos
+│   │   ├── genesys_integration.py  # Integración con la plataforma Genesys
+│   ├── main.py                     # Punto de entrada principal de la aplicación
+├── requirements.txt                # Dependencias del proyecto
+├── Dockerfile                      # Configuración para construcción de imagen Docker
+├── runLocal.bat                    # Script para ejecutar la aplicación localmente en Windows
+├── README.md                       # Documentación principal del proyecto
